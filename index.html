@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QuerySage Chatbot 🧠</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #1e1e2f; color: #fff; font-family: 'Segoe UI', sans-serif; }
+        .chat-container { max-width: 800px; margin: 50px auto; background-color: #2b2b3b; padding: 20px; border-radius: 15px; }
+        .chat-box { height: 400px; overflow-y: scroll; border: 1px solid #444; padding: 10px; border-radius: 10px; background-color: #1f1f2f; }
+        .user-msg { text-align: right; color: #ffd700; margin: 5px 0; }
+        .bot-msg { text-align: left; color: #00ffff; margin: 5px 0; }
+        .file-upload { margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h2>QuerySage Chatbot 🧠</h2>
+        <div class="chat-box" id="chat-box"></div>
+
+        <form id="chat-form">
+            <input type="text" id="question" class="form-control" placeholder="Ask a question..." autocomplete="off" required>
+            <button class="btn btn-primary mt-2" type="submit">Send</button>
+        </form>
+
+        <form id="upload-form" class="file-upload" enctype="multipart/form-data">
+            <input type="file" name="file" class="form-control" required>
+            <button class="btn btn-success mt-2" type="submit">Upload Document</button>
+        </form>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById("chat-box");
+        const chatForm = document.getElementById("chat-form");
+        const uploadForm = document.getElementById("upload-form");
+
+        chatForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const question = document.getElementById("question").value;
+            appendMessage("You", question, "user-msg");
+
+            const res = await fetch("/ask", {
+                method: "POST",
+                body: new URLSearchParams({ question })
+            });
+            const data = await res.json();
+            appendMessage("QuerySage", data.answer || data.error, "bot-msg");
+
+            document.getElementById("question").value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        uploadForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const fileInput = uploadForm.querySelector('input[type="file"]');
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            const res = await fetch("/upload", { method: "POST", body: formData });
+            const data = await res.json();
+            alert(data.message || data.error);
+        });
+
+        function appendMessage(sender, text, className) {
+            const div = document.createElement("div");
+            div.className = className;
+            div.innerHTML = `<strong>${sender}:</strong> ${text}`;
+            chatBox.appendChild(div);
+        }
+    </script>
+</body>
+</html>
